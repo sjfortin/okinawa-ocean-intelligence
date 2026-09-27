@@ -6,7 +6,7 @@ export const weatherResponseSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   hourly: z.object({
-    time: z.array(z.string()),
+    time: z.array(z.number().finite().transform((seconds) => new Date(seconds * 1000).toISOString())),
     temperature_2m: nullableNumberArray,
     precipitation: nullableNumberArray,
     visibility: nullableNumberArray,
@@ -20,7 +20,7 @@ export const marineResponseSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   hourly: z.object({
-    time: z.array(z.string()),
+    time: z.array(z.number().finite().transform((seconds) => new Date(seconds * 1000).toISOString())),
     wave_height: nullableNumberArray,
     wave_direction: nullableNumberArray,
     wave_period: nullableNumberArray,
@@ -35,4 +35,3 @@ export const marineResponseSchema = z.object({
 
 export type OpenMeteoWeatherResponse = z.infer<typeof weatherResponseSchema>;
 export type OpenMeteoMarineResponse = z.infer<typeof marineResponseSchema>;
-

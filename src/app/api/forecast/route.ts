@@ -6,7 +6,7 @@ import { OpenMeteoProvider } from "@/providers/open-meteo/client";
 const querySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
-  forecastDays: z.coerce.number().int().min(1).max(16).default(7),
+  forecastDays: z.coerce.number().int().min(1).max(7).default(7),
 });
 
 export async function GET(request: NextRequest) {
@@ -31,4 +31,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forecast provider unavailable" }, { status: 502 });
   }
 }
-

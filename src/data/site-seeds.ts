@@ -21,6 +21,33 @@ const fact = <T>(value: T, locator: string) => ({
  */
 export const siteSeeds: Site[] = [
   {
+    id: "mccs-kadena-north",
+    slug: "kadena-north",
+    name: "Kadena North Seawall",
+    summary: "Listed by MCCS as Kadena North, a shallow shore-diving site used for instruction.",
+    coordinates: null,
+    forecastPoint: {
+      value: { latitude: 26.3594, longitude: 127.7392 },
+      status: "needs_verification",
+      source: {
+        sourceId: "padi-kadena-north-steps",
+        sourceName: "PADI — Kadena North Steps",
+        canonicalUrl: "https://www.padi.com/dive-site/japan/kadena-north-steps/",
+        retrievedAt: "2026-09-27T00:00:00+09:00",
+        locator: "Location coordinates",
+      },
+      note: "Published North Steps point for a regional forecast preview. TODO: independently confirm the MCCS Kadena North identity and exact legal seawall entry; do not substitute the nearby Jam site.",
+    },
+    difficulty: fact(1, "Kadena North — level label"),
+    activities: ["shore_dive"],
+    accessNotes: { ...fact("MCCS describes an easy entry north of Kadena Steps. Confirm current access, parking, and the exact entry locally.", "Kadena North — access description"), status: "needs_verification" },
+    hazards: { ...fact(["Current conditions and entry hazards require local verification"], "Kadena North — conditions description"), status: "needs_verification" },
+    marineLife: fact(["sea stars", "sea cucumbers", "crabs", "angelfish", "butterflyfish"], "Kadena North — description"),
+    visibilityTypicalMeters: fact({ min: 15.24, max: 15.24 }, "Kadena North — average visibility (50 feet converted to meters)"),
+    rules: [],
+    catalogStatus: "needs_verification",
+  },
+  {
     id: "mccs-sunabe-seawall",
     slug: "sunabe-seawall",
     name: "Sunabe Seawall",
@@ -161,4 +188,3 @@ export const siteSeeds: Site[] = [
     catalogStatus: "needs_verification",
   },
 ];
-

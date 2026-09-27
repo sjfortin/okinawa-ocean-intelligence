@@ -106,7 +106,7 @@ export const mccsSiteReviewQueue: MccsSiteReviewItem[] = [
     candidateCanonicalNames: ["Kadena North"],
     listedActivities: ["shore_dive"],
     segmentation: "single_site",
-    seedStatus: "not_seeded",
+    seedStatus: "seeded",
     identityStatus: "needs_verification",
     coordinatesStatus: "needs_verification",
     accessStatus: "needs_verification",

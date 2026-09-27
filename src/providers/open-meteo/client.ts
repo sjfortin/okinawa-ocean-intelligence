@@ -108,14 +108,19 @@ export class OpenMeteoProvider implements ConditionsProvider {
       longitude: String(request.longitude),
       timezone: request.timezone ?? "Asia/Tokyo",
       forecast_days: String(request.forecastDays ?? 7),
+      timeformat: "unixtime",
+      wind_speed_unit: "kmh",
     });
     const weatherUrl = new URL(`${this.weatherBaseUrl}/forecast`);
     weatherUrl.search = common.toString();
     weatherUrl.searchParams.set("hourly", WEATHER_FIELDS.join(","));
+    weatherUrl.searchParams.set("temperature_unit", "celsius");
+    weatherUrl.searchParams.set("precipitation_unit", "mm");
 
     const marineUrl = new URL(`${this.marineBaseUrl}/marine`);
     marineUrl.search = common.toString();
     marineUrl.searchParams.set("hourly", MARINE_FIELDS.join(","));
+    marineUrl.searchParams.set("length_unit", "metric");
 
     const requestedAt = new Date().toISOString();
     const weatherRunId = randomUUID();
@@ -166,4 +171,3 @@ export class OpenMeteoProvider implements ConditionsProvider {
     };
   }
 }
-

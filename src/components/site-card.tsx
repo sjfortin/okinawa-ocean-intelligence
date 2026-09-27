@@ -1,4 +1,5 @@
 import type { Site } from "@/domain/site";
+import Link from "next/link";
 
 export function SiteCard({ site }: { site: Site }) {
   return (
@@ -21,7 +22,7 @@ export function SiteCard({ site }: { site: Site }) {
       {site.hazards.value.length > 0 && (
         <p className="site-card__hazards">Watch: {site.hazards.value.join("; ")}</p>
       )}
+      <p><Link href={`/sites/${site.slug}`}>View site & conditions →</Link></p>
     </article>
   );
 }
-

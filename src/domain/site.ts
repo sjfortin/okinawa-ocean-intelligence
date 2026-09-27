@@ -46,6 +46,7 @@ export interface Site {
   name: string;
   summary: string;
   coordinates: ProvenancedFact<Coordinates> | null;
+  forecastPoint?: ProvenancedFact<Coordinates>;
   difficulty: ProvenancedFact<number>;
   activities: ActivityKind[];
   accessNotes: ProvenancedFact<string>;
@@ -55,4 +56,3 @@ export interface Site {
   rules: SiteRule[];
   catalogStatus: VerificationStatus;
 }
-

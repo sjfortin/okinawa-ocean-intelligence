@@ -7,7 +7,9 @@ The product combines a curated Okinawa snorkel/dive-site catalog with normalized
 ## What exists now
 
 - Next.js and TypeScript web app with a visible starter catalog.
-- Provenance-carrying domain model and six MCCS-derived starter records.
+- Provenance-carrying domain model and seven MCCS-derived starter records, including Kadena North Seawall.
+- Site detail pages with access notes, field-level sources, and explicit forecast availability.
+- Kadena North regional forecast preview at a sourced, provisional North Steps point; 24 hours of weather/marine inputs in JST.
 - Metadata-only MCCS source snapshots and a 15-heading verification queue.
 - Typed Open-Meteo weather/marine adapter with runtime response validation.
 - First deterministic scoring rules and tests.
@@ -26,11 +28,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The seed catalog renders without a database. To exercise the provider adapter:
 
+Open `/sites/kadena-north` and select **Load forecast preview** to see the first integrated site forecast. Its location identity and access still require independent review. Other detail pages show a pending-location state. No database or environment file is needed for these pages.
+
 ```bash
 curl "http://localhost:3000/api/forecast?latitude=26.34&longitude=127.75&forecastDays=2"
 ```
 
 The example coordinate is only for testing the API path; it is not assigned to a catalog site.
+
+`GET /api/sites/kadena-north/forecast` serves a two-day normalized forecast with the point's source and verification status. Unknown sites return 404, sites without a sourced point return 422, and provider failures return 502. Forecast timestamps use UTC instants and are displayed in Japan time. Scores and recommended entry windows are not enabled yet.
 
 ### Local database
 
