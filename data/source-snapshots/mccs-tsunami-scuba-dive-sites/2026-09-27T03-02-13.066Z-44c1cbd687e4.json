@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "mccs-tsunami-scuba-dive-sites",
+  "canonicalUrl": "https://www.okinawa.usmc-mccs.org/shopping-services/tsunami-scuba/dive-sites",
+  "resolvedUrl": "https://www.okinawa.usmc-mccs.org/shopping-services/tsunami-scuba/dive-sites",
+  "retrievedAt": "2026-09-27T03:02:13.066Z",
+  "httpStatus": 200,
+  "contentHash": "44c1cbd687e4fce55d54ef9a1496543b1f01338f7f14294f3aeb16c6031437aa",
+  "hashAlgorithm": "sha256",
+  "byteLength": 241630,
+  "contentType": "text/html",
+  "etag": null,
+  "lastModified": null,
+  "bodyStored": false,
+  "storageUri": null
+}
