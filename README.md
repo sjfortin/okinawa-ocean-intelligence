@@ -11,14 +11,15 @@ The product combines a curated Okinawa snorkel/dive-site catalog with normalized
 - Site detail pages with access notes, field-level sources, and explicit forecast availability.
 - Kadena North regional forecast preview at a sourced, provisional North Steps point; 24 hours of weather/marine inputs in JST.
 - Metadata-only MCCS source snapshots and a 15-heading verification queue.
-- Typed Open-Meteo weather/marine adapter with runtime response validation.
+- Typed Open-Meteo weather/marine adapter with unit, timestamp, and array validation plus separate provider grid locations.
+- Recorded Okinawa forecast contract fixture, response hashes, and optional transactional PostgreSQL forecast storage.
 - First deterministic scoring rules and tests.
 - PostgreSQL schema for PostGIS, pgvector, sources, facts, forecasts, rules, and assessments.
 - Product, architecture, provider, conditions-engine, agent, evaluation, and ADR documentation.
 
 ## Quick start
 
-Requirements: Node.js 20.9+ (Node 22 recommended), npm, and Docker if you want the database.
+Requirements: Node.js 22, npm, and Docker if you want the database.
 
 ```bash
 cp .env.example .env.local
@@ -38,6 +39,16 @@ The example coordinate is only for testing the API path; it is not assigned to a
 
 `GET /api/sites/kadena-north/forecast` serves a two-day normalized forecast with the point's source and verification status. Unknown sites return 404, sites without a sourced point return 422, and provider failures return 502. Forecast timestamps use UTC instants and are displayed in Japan time. Scores and recommended entry windows are not enabled yet.
 
+When `DATABASE_URL` is configured and migrations are applied, both forecast endpoints persist successful results and include `forecastId`. Retrieve that exact archived batch at `/api/forecasts/:id`; it is not refreshed automatically. Database failures return 503. Leave `DATABASE_URL` unset for the database-free preview.
+
+### Deploy a preview to Vercel
+
+Import `sjfortin/okinawa-ocean-intelligence` from GitHub with the repository root as the root directory. The checked-in configuration selects Next.js, installs with `npm ci`, and runs `npm run check` before deploying. Node.js is pinned to 22.x in `package.json`.
+
+For the initial catalog/live-forecast preview, leave all environment variables unset, including `DATABASE_URL`. Open-Meteo uses the configured defaults. After deployment, open `/sites/kadena-north` and select **Load forecast preview** to check live provider connectivity.
+
+Enable persistence only after provisioning PostgreSQL with PostGIS, vector, and pgcrypto, applying migrations, and running the database integration test against a separate test database. Set the hosted connection string as server-only `DATABASE_URL` in Vercel and redeploy. Do not use the local Docker connection string on Vercel.
+
 ### Local database
 
 ```bash
@@ -45,6 +56,8 @@ npm run db:up
 cp .env.example .env.local
 npm run db:migrate
 ```
+
+The migration script reads `DATABASE_URL` from the shell environment; export it before running (copying `.env.local` alone does not load it for this script). Migrations run in filename order inside a transaction, with a ledger and advisory lock. Existing databases created by the original migration script are supported by its idempotent initial migration.
 
 The container adds PostGIS and pgvector to PostgreSQL 17. The image package name is marked for verification when the base image changes.
 
@@ -55,6 +68,10 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+`npm run check` runs all three checks. Offline tests replay the dated Open-Meteo fixture; they make no network calls. Record a new response pair using `npm run forecast:fixture -- tests/fixtures/open-meteo/YYYY-MM-DD` (existing files are protected from overwrite).
+
+To verify SQL round-trip and rollback behavior, set `TEST_DATABASE_URL` to a disposable PostgreSQL database with PostGIS and vector installed in `public`, then run `npm test -- tests/forecast-db.test.ts`. The test creates and removes an isolated schema. It is skipped when that variable is unset.
 
 Capture a fresh metadata-only MCCS source snapshot (no page body is stored):
 

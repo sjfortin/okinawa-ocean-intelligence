@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -17,6 +17,7 @@
     "db:down": "docker compose down",
     "db:migrate": "tsx scripts/migrate.ts",
     "source:snapshot:mccs": "tsx scripts/capture-source-snapshot.ts",
+    "forecast:fixture": "node --import tsx scripts/capture-forecast-fixture.ts",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {

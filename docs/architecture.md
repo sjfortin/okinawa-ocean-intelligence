@@ -24,10 +24,10 @@ The dependency direction is inward: UI and providers depend on domain contracts.
 ### Forecast data
 
 1. Request weather and marine values for a coordinate.
-2. Record each provider run before/after the call.
+2. Assign provider run IDs and retain request parameters and response hashes.
 3. Validate the response at runtime.
-4. Normalize units and join by local timestamp string.
-5. Persist hourly records with provider run IDs.
+4. Verify returned units and join by UTC instant.
+5. When a database is configured, atomically persist a forecast batch, successful provider runs, and hourly records with every contributing provider run ID.
 6. Mark missing fields as null and attach warnings.
 
 ### Assessment
@@ -58,9 +58,16 @@ Key chains:
 
 - `source → source_snapshot → site_fact → site_condition_rule`
 - `provider_run → condition_forecast → condition_assessment`
+- `forecast_batch → forecast_batch_runs → provider_run`, with `condition_forecast_runs` retaining the full dependency set for each merged hour
 - `site + activity + valid_at + engine_version → condition_assessment`
 
 Raw third-party content should usually remain out of the database; retain hashes, retrieval metadata, locators, and authorized storage pointers.
+
+The initial `condition_forecasts.provider_run_id` column remains a primary-run anchor for compatibility. It is not the complete lineage of a merged weather/marine record; use `condition_forecast_runs` for that. Successful runs and forecast batches are immutable inserts. Each fresh retrieval receives new run and batch IDs. A repeated save of the same run IDs fails and rolls back instead of overwriting history.
+
+Both live forecast endpoints use the shared forecast service. With no `DATABASE_URL`, they keep the database-free preview behavior. With a configured database, they return `forecastId` only after the transaction commits; storage failures return HTTP 503. `GET /api/forecasts/:id` reads the saved batch without contacting a provider and labels it `archived: true`; it makes no freshness claim. Unknown IDs return 404, malformed IDs return 400, and unconfigured/unavailable storage returns 503.
+
+Only successful, validated pairs are persisted currently. TODO: add durable started/failed run lifecycle records and response status/error summaries before operational ingestion jobs are introduced. No automatic retries, deduplication, retention policy, or cached fallback is implemented yet.
 
 ## Failure behavior
 
@@ -89,8 +96,7 @@ The app is a standard Next.js service plus PostgreSQL. Initial deployment can co
 ## Architecture TODOs
 
 - Add Drizzle schema/query modules after the SQL model survives the first curation pass.
-- Add fixture-backed provider contract tests and persistence transactions.
+- Run the opt-in PostgreSQL integration suite against the deployment database version; offline tests do not prove transaction rollback in a real server.
 - Choose a background job mechanism based on deployment target.
 - Define cache and retention policies from verified provider terms.
 - Add an internal curation/review surface rather than editing seeds by hand.
-

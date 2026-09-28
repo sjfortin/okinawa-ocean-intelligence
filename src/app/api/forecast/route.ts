@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { env } from "@/config/env";
-import { OpenMeteoProvider } from "@/providers/open-meteo/client";
+import { ForecastStorageError, getForecast } from "@/server/forecasts/service";
 
 const querySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
@@ -18,15 +17,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const provider = new OpenMeteoProvider({
-    weatherBaseUrl: env.OPEN_METEO_WEATHER_BASE_URL,
-    marineBaseUrl: env.OPEN_METEO_MARINE_BASE_URL,
-    timeoutMs: env.PROVIDER_TIMEOUT_MS,
-  });
-
   try {
-    return NextResponse.json(await provider.getForecast(parsed.data));
+    return NextResponse.json(await getForecast(parsed.data), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (error instanceof ForecastStorageError) {
+      return NextResponse.json({ error: "Forecast storage unavailable" }, { status: 503 });
+    }
     console.error("Forecast provider failed", error);
     return NextResponse.json({ error: "Forecast provider unavailable" }, { status: 502 });
   }

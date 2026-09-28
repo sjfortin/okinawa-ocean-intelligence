@@ -2,6 +2,7 @@ import type { ActivityKind, SiteRule } from "./site";
 
 export interface NormalizedConditions {
   validAt: string;
+  /** Weather grid reference; each contributing run retains its own grid location. */
   latitude: number;
   longitude: number;
   airTemperatureC: number | null;
@@ -46,4 +47,3 @@ export interface AssessmentInput {
   rules: SiteRule[];
   evaluatedAt?: string;
 }
-

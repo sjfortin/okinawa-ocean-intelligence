@@ -1,24 +1,48 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { OpenMeteoProvider } from "@/providers/open-meteo/client";
 import { GET } from "@/app/api/sites/[slug]/forecast/route";
 
-const weather = { latitude: 26.4, longitude: 127.7, hourly: {
-  time: [1790463600, 1790467200], temperature_2m: [28, 29], precipitation: [0, null], visibility: [10000, null], wind_speed_10m: [12, 15], wind_direction_10m: [90, 90], wind_gusts_10m: [20, 25],
-} };
-const marine = { latitude: 26.5, longitude: 127.5, hourly: {
-  time: [1790467200], wave_height: [null], wave_direction: [90], wave_period: [6], swell_wave_height: [0.4], swell_wave_direction: [100], sea_level_height_msl: [0.1], sea_surface_temperature: [27], ocean_current_velocity: [1.2], ocean_current_direction: [180],
-} };
+import { weather, marine } from "./fixtures/open-meteo/synthetic";
 
 describe("forecast contracts", () => {
+  it.each([
+    ["unexpected units", (data: typeof weather) => { data.hourly_units.wind_speed_10m = "mp/h"; }],
+    ["missing units", (data: typeof weather) => { Reflect.deleteProperty(data, "hourly_units"); }],
+    ["short array", (data: typeof weather) => { data.hourly.visibility.pop(); }],
+    ["duplicate time", (data: typeof weather) => { data.hourly.time[1] = data.hourly.time[0]; }],
+    ["reversed time", (data: typeof weather) => { data.hourly.time.reverse(); }],
+    ["invalid timestamp", (data: typeof weather) => { data.hourly.time[0] = 1e16; }],
+    ["invalid coordinate", (data: typeof weather) => { data.latitude = 91; }],
+  ])("rejects %s instead of silently normalizing it", async (_label, mutate) => {
+    const malformed = structuredClone(weather);
+    mutate(malformed);
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(malformed)).mockResolvedValueOnce(Response.json(marine));
+    await expect(new OpenMeteoProvider({ fetchImpl }).getForecast({ latitude: 26, longitude: 127 })).rejects.toThrow();
+  });
+  it("rejects marine unit drift independently", async () => {
+    const malformed = structuredClone(marine);
+    malformed.hourly_units.ocean_current_velocity = "m/s";
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(weather)).mockResolvedValueOnce(Response.json(malformed));
+    await expect(new OpenMeteoProvider({ fetchImpl }).getForecast({ latitude: 26, longitude: 127 })).rejects.toThrow();
+  });
   it("joins by UTC instant, preserves missing marine hours/nulls, and requests explicit units", async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(weather)).mockResolvedValueOnce(Response.json(marine));
     const result = await new OpenMeteoProvider({ fetchImpl }).getForecast({ latitude: 26.3594, longitude: 127.7392, forecastDays: 2 });
+    expect(result.metadata[0].responseHash).toBe(createHash("sha256").update(JSON.stringify(weather)).digest("hex"));
+    expect(result.metadata[1].responseHash).toBe(createHash("sha256").update(JSON.stringify(marine)).digest("hex"));
+    expect(result.metadata[0].requestParameters).toMatchObject({ latitude: "26.3594", forecast_days: "2", temperature_unit: "celsius" });
     expect(result.hours[0].validAt).toBe(new Date(1790463600 * 1000).toISOString());
     expect(result.hours[0].seaSurfaceTemperatureC).toBeNull();
     expect(result.hours[1].seaSurfaceTemperatureC).toBe(27);
     expect(result.hours[1].waveHeightM).toBeNull();
     expect(result.hours[1].precipitationMm).toBeNull();
     expect(result.hours[1].providerRunIds).toEqual(result.metadata.map((run) => run.runId));
+    expect(result.metadata.map((run) => run.gridLocation)).toEqual([
+      { latitude: 26.4, longitude: 127.7 },
+      { latitude: 26.5, longitude: 127.5 },
+    ]);
+    expect(result.metadata.every((run) => run.requestedLocation.latitude === 26.3594 && run.requestedLocation.longitude === 127.7392)).toBe(true);
     for (const call of fetchImpl.mock.calls) {
       const url = new URL(String(call[0]));
       expect(url.searchParams.get("timeformat")).toBe("unixtime");

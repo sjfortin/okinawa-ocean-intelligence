@@ -13,6 +13,10 @@ export interface ProviderMetadata {
   requestedAt: string;
   responseReceivedAt: string;
   endpoint: string;
+  requestParameters: Record<string, string>;
+  responseHash: string;
+  requestedLocation: { latitude: number; longitude: number };
+  gridLocation: { latitude: number; longitude: number };
 }
 
 export interface ForecastResult {
@@ -25,4 +29,3 @@ export interface ConditionsProvider {
   readonly name: string;
   getForecast(request: ForecastRequest): Promise<ForecastResult>;
 }
-

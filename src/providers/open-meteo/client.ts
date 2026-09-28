@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { NormalizedConditions } from "@/domain/conditions";
 import type {
   ConditionsProvider,
@@ -137,12 +137,12 @@ export class OpenMeteoProvider implements ConditionsProvider {
       );
     }
 
-    const [weatherJson, marineJson] = await Promise.all([
-      weatherResponse.json(),
-      marineResponse.json(),
+    const [weatherBody, marineBody] = await Promise.all([
+      weatherResponse.text(),
+      marineResponse.text(),
     ]);
-    const weather = weatherResponseSchema.parse(weatherJson);
-    const marine = marineResponseSchema.parse(marineJson);
+    const weather = weatherResponseSchema.parse(JSON.parse(weatherBody));
+    const marine = marineResponseSchema.parse(JSON.parse(marineBody));
     const responseReceivedAt = new Date().toISOString();
     const metadata: ProviderMetadata[] = [
       {
@@ -151,6 +151,10 @@ export class OpenMeteoProvider implements ConditionsProvider {
         requestedAt,
         responseReceivedAt,
         endpoint: weatherUrl.origin + weatherUrl.pathname,
+        requestParameters: Object.fromEntries(weatherUrl.searchParams),
+        responseHash: createHash("sha256").update(weatherBody).digest("hex"),
+        requestedLocation: { latitude: request.latitude, longitude: request.longitude },
+        gridLocation: { latitude: weather.latitude, longitude: weather.longitude },
       },
       {
         provider: "open-meteo-marine",
@@ -158,6 +162,10 @@ export class OpenMeteoProvider implements ConditionsProvider {
         requestedAt,
         responseReceivedAt,
         endpoint: marineUrl.origin + marineUrl.pathname,
+        requestParameters: Object.fromEntries(marineUrl.searchParams),
+        responseHash: createHash("sha256").update(marineBody).digest("hex"),
+        requestedLocation: { latitude: request.latitude, longitude: request.longitude },
+        gridLocation: { latitude: marine.latitude, longitude: marine.longitude },
       },
     ];
 

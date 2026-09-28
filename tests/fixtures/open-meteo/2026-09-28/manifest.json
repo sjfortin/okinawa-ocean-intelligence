@@ -1,0 +1,70 @@
+{
+  "request": {
+    "latitude": 26.35,
+    "longitude": 127.65,
+    "forecastDays": 1,
+    "timezone": "Asia/Tokyo"
+  },
+  "metadata": [
+    {
+      "provider": "open-meteo-weather",
+      "runId": "511fa7e0-77bb-44b7-8266-eab2a3dafceb",
+      "requestedAt": "2026-09-28T03:32:49.554Z",
+      "responseReceivedAt": "2026-09-28T03:32:51.297Z",
+      "endpoint": "https://api.open-meteo.com/v1/forecast",
+      "requestParameters": {
+        "latitude": "26.35",
+        "longitude": "127.65",
+        "timezone": "Asia/Tokyo",
+        "forecast_days": "1",
+        "timeformat": "unixtime",
+        "wind_speed_unit": "kmh",
+        "hourly": "temperature_2m,precipitation,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m",
+        "temperature_unit": "celsius",
+        "precipitation_unit": "mm"
+      },
+      "responseHash": "4b6fed0e9da39fd0acef1ed51a5caca975c1d36a9dd6325f8e7c8726bbd725d0",
+      "requestedLocation": {
+        "latitude": 26.35,
+        "longitude": 127.65
+      },
+      "gridLocation": {
+        "latitude": 26.25659,
+        "longitude": 127.738754
+      }
+    },
+    {
+      "provider": "open-meteo-marine",
+      "runId": "0a44552f-d244-47af-ba1d-3566e5a446e4",
+      "requestedAt": "2026-09-28T03:32:49.554Z",
+      "responseReceivedAt": "2026-09-28T03:32:51.297Z",
+      "endpoint": "https://marine-api.open-meteo.com/v1/marine",
+      "requestParameters": {
+        "latitude": "26.35",
+        "longitude": "127.65",
+        "timezone": "Asia/Tokyo",
+        "forecast_days": "1",
+        "timeformat": "unixtime",
+        "wind_speed_unit": "kmh",
+        "hourly": "wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,sea_level_height_msl,sea_surface_temperature,ocean_current_velocity,ocean_current_direction",
+        "length_unit": "metric"
+      },
+      "responseHash": "4da01cdac08f91f8c8bb92fabd8f1152fa35b6552eccd89cbe8c3476a3b993f9",
+      "requestedLocation": {
+        "latitude": 26.35,
+        "longitude": 127.65
+      },
+      "gridLocation": {
+        "latitude": 26.375,
+        "longitude": 127.625015
+      }
+    }
+  ],
+  "warnings": [
+    "Forecasts are planning inputs, not a declaration that entry is safe.",
+    "Open-Meteo sea_level_height_msl is not suitable for coastal navigation and may be unreliable near shore."
+  ],
+  "attribution": "Weather and marine data by Open-Meteo (https://open-meteo.com/).",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "modifications": "Response bodies preserved as received; manifest and normalization are project-generated."
+}
