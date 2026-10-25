@@ -1,6 +1,13 @@
 import type { SourceDefinition } from "@/domain/provenance";
 
 export const sourceRegistry = {
+  jmaNahaTides: {
+    id: "jma-tides-NH",
+    name: "JMA — Naha astronomical tide predictions",
+    canonicalUrl: "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=NH",
+    publisher: "Japan Meteorological Agency",
+    licenseNotes: "JMA public-data terms apply unless otherwise indicated; attribute JMA and identify reformatted output. See https://www.jma.go.jp/jma/kishou/info/coment.html . Retain normalized predictions and response-hash metadata, not page bodies.",
+  },
   mccsDiveSites: {
     id: "mccs-tsunami-scuba-dive-sites",
     name: "MCCS Tsunami Scuba — Okinawa Dive Sites",
