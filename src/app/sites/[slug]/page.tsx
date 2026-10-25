@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { SiteDashboard } from "@/components/site-dashboard";
+import { focusedSiteSlug } from "@/data/site-focus";
 import { notFound } from "next/navigation";
 import { siteSeeds } from "@/data/site-seeds";
 import { SiteForecast } from "@/components/site-forecast";
@@ -12,9 +14,10 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const site = siteSeeds.find((item) => item.slug === slug);
   if (!site) notFound();
+  if (site.slug === focusedSiteSlug) return <SiteDashboard site={site} />;
   const point = site.coordinates?.status === "verified" ? site.coordinates : site.forecastPoint;
   return <main>
-    <Link href="/">← All sites</Link>
+    <Link href="/">← North Wall dashboard</Link>
     <header className="site-header"><p className="eyebrow">Okinawa · Site guide</p><h1>{site.name}</h1><p className="lede">{site.summary}</p>
       <p>Level {site.difficulty.value} · {site.activities.map((item) => item.replaceAll("_", " ")).join(" · ")}</p><Evidence fact={site.difficulty} />
     </header>

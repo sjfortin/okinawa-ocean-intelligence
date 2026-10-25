@@ -1,43 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForecastResult } from "@/providers/types";
+import { compass, forecastView } from "@/domain/forecast-view";
 
 const time = (value: string) => new Date(value).toLocaleString("en-GB", { timeZone: "Asia/Tokyo", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-const value = (number: number | null) => number === null ? "Unavailable" : number.toFixed(1);
+const value = (number: number | null | undefined) => number == null ? "—" : number.toFixed(1);
 
 export function SiteForecast({ slug }: { slug: string }) {
   const [forecast, setForecast] = useState<ForecastResult | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  async function load() {
+  const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState<number>(0);
+  const active = useRef<AbortController | null>(null);
+  const load = useCallback(async () => {
+    active.current?.abort();
+    const controller = new AbortController();
+    active.current = controller;
     setLoading(true);
     setError("");
-    setForecast(null);
     try {
-      const response = await fetch(`/api/sites/${slug}/forecast`);
+      const response = await fetch(`/api/sites/${encodeURIComponent(slug)}/forecast`, { signal: controller.signal, cache: "no-store" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Forecast unavailable");
-      setForecast(result);
+      if (!controller.signal.aborted) { setForecast(result); setNow(Date.now()); }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Forecast unavailable");
-    } finally { setLoading(false); }
-  }
-  const fetchedAt = forecast?.metadata[0]?.responseReceivedAt;
-  const hours = fetchedAt ? forecast!.hours.filter((hour) => Date.parse(hour.validAt) >= Date.parse(fetchedAt) - 3600000).slice(0, 24) : [];
-  return <section className="forecast-panel" aria-busy={loading}>
-    <button onClick={load} disabled={loading}>{loading ? "Loading forecast…" : forecast ? "Refresh forecast" : "Load forecast preview"}</button>
-    <p role="status">{error || (loading ? "Requesting weather and marine forecasts…" : "")}</p>
-    {forecast && <>
-      <p>Next 24 forecast hours · Japan time (JST). Retrieved {time(forecast.metadata[0].responseReceivedAt)} JST.</p>
-      <p>Forecast model values; waves offshore can differ from conditions at the entry. Atmospheric visibility is not underwater visibility.</p>
-      {hours.length ? <div className="forecast-scroll" tabIndex={0} role="region" aria-label="Hourly forecast table"><table>
-        <caption>Weather and marine forecast · missing values remain unavailable</caption>
-        <thead><tr>{["Time (JST)", "Wind km/h", "Gust km/h", "Wave m", "Swell m", "Air °C", "Sea °C", "Rain mm"].map((label) => <th scope="col" key={label}>{label}</th>)}</tr></thead>
-        <tbody>{hours.map((hour) => <tr key={hour.validAt}><th scope="row">{time(hour.validAt)}</th>{[hour.windSpeedKph, hour.windGustKph, hour.waveHeightM, hour.swellHeightM, hour.airTemperatureC, hour.seaSurfaceTemperatureC, hour.precipitationMm].map((number, index) => <td key={index}>{value(number)}</td>)}</tr>)}</tbody>
-      </table></div> : <p>No upcoming hours are available.</p>}
-      {forecast.warnings.map((warning) => <p className="notice" key={warning}>{warning}</p>)}
-      <p>Weather data by <a href="https://open-meteo.com/">Open-Meteo</a>; marine attribution: <a href="https://www.dwd.de/">DWD</a> and <a href="https://open-meteo.com/en/docs/marine-weather-api">Open-Meteo Marine</a>.</p>
-    </>}
+      if (!controller.signal.aborted) setError(error instanceof Error ? error.message : "Forecast unavailable");
+    } finally { if (!controller.signal.aborted) setLoading(false); }
+  }, [slug]);
+
+  useEffect(() => {
+    const initialLoad = window.setTimeout(() => void load(), 0);
+    const tick = window.setInterval(() => setNow(Date.now()), 30_000);
+    const refresh = window.setInterval(() => { if (!document.hidden) void load(); }, 10 * 60_000);
+    const onVisible = () => { if (!document.hidden) { setNow(Date.now()); void load(); } };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearTimeout(initialLoad); active.current?.abort(); clearInterval(tick); clearInterval(refresh); document.removeEventListener("visibilitychange", onVisible); };
+  }, [load]);
+
+  const view = forecastView(forecast, now);
+  const hour = view.current;
+  const status = error ? "Forecast refresh failed" : loading && !forecast ? "Fetching the forecast" : view.stale ? "Forecast unavailable or out of date" : !hour ? "No forecast for this hour" : "Forecast available · entry unverified";
+  return <section className="forecast-panel" aria-label="Water and weather forecast" aria-busy={loading}>
+    <div className="conditions-heading"><div><p className="eyebrow">The water, at a glance</p><h2>Current-hour outlook</h2></div><button onClick={() => void load()} disabled={loading}>{loading ? "Updating…" : "Refresh"}</button></div>
+    <div className="status-banner"><span className="status-dot" /><div><strong role="status">{status}</strong><p>Model forecast, not a live measurement at the seawall. Official alerts and entry conditions still need checking.</p></div></div>
+    {error && <p className="notice" role="alert">{error} {forecast ? "Showing the last retrieved forecast below." : "Use the official references below while the forecast is unavailable."}</p>}
+    <p className="timestamp">{hour ? `Valid ${time(hour.validAt)} JST` : "Current hour unavailable"}{view.retrievedAt ? ` · Retrieved ${time(view.retrievedAt)} JST` : ""} · Refreshes every 10 min</p>
+    <div className="metric-grid">
+      <Metric label="Waves" number={hour?.waveHeightM} unit="m" detail={`${value(hour?.wavePeriodS)} s period · from ${compass(hour?.waveDirectionDeg)}`} />
+      <Metric label="Wind" number={hour?.windSpeedKph} unit="km/h" detail={`From ${compass(hour?.windDirectionDeg)} · gusts ${value(hour?.windGustKph)} km/h`} />
+      <Metric label="Water" number={hour?.seaSurfaceTemperatureC} unit="°C" detail="Sea surface temperature" />
+      <Metric label="Swell" number={hour?.swellHeightM} unit="m" detail={`From ${compass(hour?.swellDirectionDeg)} · offshore model`} />
+    </div>
+    <p className="secondary-metrics">Air {value(hour?.airTemperatureC)} °C <span>·</span> Rain {value(hour?.precipitationMm)} mm <span>·</span> Offshore current {value(hour?.oceanCurrentVelocityKph)} km/h</p>
+    <p className="small-note">— means unavailable. Offshore waves and currents can differ substantially at the reef and entry.</p>
+    <div className="outlook-heading"><h3>Next 24 hours</h3><span>Japan time · JST</span></div>
+    {view.upcoming.length ? <div className="forecast-scroll" tabIndex={0} role="region" aria-label="Hourly outlook, scroll horizontally"><table>
+      <caption>Hourly model forecast · compare the whole trip, including your exit</caption>
+      <thead><tr>{["Time", "Waves / period", "Wind / gusts", "Swell", "Water", "Rain"].map((label) => <th scope="col" key={label}>{label}</th>)}</tr></thead>
+      <tbody>{view.upcoming.map((h) => <tr key={h.validAt}><th scope="row">{time(h.validAt)}</th><td>{value(h.waveHeightM)} m <small>/ {value(h.wavePeriodS)} s</small></td><td>{value(h.windSpeedKph)} <small>/ {value(h.windGustKph)} km/h · {compass(h.windDirectionDeg)}</small></td><td>{value(h.swellHeightM)} m</td><td>{value(h.seaSurfaceTemperatureC)} °C</td><td>{value(h.precipitationMm)} mm</td></tr>)}</tbody>
+    </table></div> : <div className="empty-state">{loading ? "Loading the hourly outlook…" : "No upcoming forecast hours available. Try refreshing."}</div>}
+    {forecast && <details className="data-details"><summary>Forecast sources & limitations</summary>
+      <p>Weather by <a href="https://open-meteo.com/">Open-Meteo</a>; marine data by <a href="https://www.dwd.de/">DWD</a> and <a href="https://open-meteo.com/en/docs/marine-weather-api">Open-Meteo Marine</a>. Retrieval time is not the model issue time.</p>
+      {forecast.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+      <p>Underwater visibility, breaking surf, local rip currents and access closures are not measured here. Sea-level model output is not used as a local tide table.</p>
+      {forecast.metadata.map((run) => <p key={run.runId}>{run.provider} · grid {run.gridLocation.latitude}, {run.gridLocation.longitude} · retrieved {time(run.responseReceivedAt)} JST<br /><small>Run {run.runId} · SHA-256 {run.responseHash}</small></p>)}
+    </details>}
   </section>;
+}
+
+function Metric({ label, number, unit, detail }: { label: string; number: number | null | undefined; unit: string; detail: string }) {
+  return <div className="metric"><p>{label}</p><div className="metric-value">{value(number)} <span>{unit}</span></div><small>{detail}</small></div>;
 }
