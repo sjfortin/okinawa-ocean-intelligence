@@ -2,22 +2,22 @@ import Link from "next/link";
 import { TidePanel } from "@/components/tide-panel";
 import { siteTideStations } from "@/data/tide-stations";
 import { SiteForecast } from "@/components/site-forecast";
-import { planningReferences } from "@/data/site-focus";
+import { dashboardSites, planningReferences } from "@/data/site-focus";
 import type { Site } from "@/domain/site";
 
-export function SiteDashboard({ site }: { site: Site }) {
+export function SiteDashboard({ site, slug }: { site: Site; slug: keyof typeof dashboardSites }) {
   const point = site.coordinates?.status === "verified" ? site.coordinates : site.forecastPoint;
-  const references = planningReferences[site.slug] ?? [];
+  const references = planningReferences;
   const alerts = references.filter((reference) => reference.category === "alerts");
   const hasTides = Boolean(siteTideStations[site.slug]);
   return <main>
     <nav className="topbar" aria-label="Page navigation">
-      <Link className="wordmark" href="/">OCEAN / OKINAWA</Link>
-      <div className="page-links">{hasTides && <a href="#tides">Tides</a>}<a href="#before-you-go">Alerts</a></div>
+      <Link className="wordmark" href="/?choose=1">OCEAN / OKINAWA</Link>
+      <div className="page-links"><Link href="/?choose=1">Change site</Link>{hasTides && <a href="#tides">Tides</a>}<a href="#before-you-go">Alerts</a></div>
     </nav>
     <header className="site-header">
-      <p className="eyebrow">Kadena town · Okinawa west coast</p>
-      <h1>{site.slug === "kadena-north" ? "Kadena North Wall" : site.name}</h1>
+      <p className="eyebrow">{dashboardSites[slug].area} · Okinawa west coast</p>
+      <h1>{dashboardSites[slug].name}</h1>
       <p className="location-note">Snorkeling & shore diving · All times Japan time</p>
     </header>
     {point ? <SiteForecast key={`forecast-${site.slug}`} slug={site.slug} /> : <p className="notice">Forecast unavailable until a sourced location is added.</p>}
@@ -30,7 +30,10 @@ export function SiteDashboard({ site }: { site: Site }) {
     <section className="site-notes" id="site-notes" aria-label="Site and source details">
       <details><summary>About this spot</summary>
         <p>{site.summary}</p><p>{site.accessNotes.value}</p>
-        <p>MCCS calls the site “Kadena North”; the forecast reference is “Kadena North Steps.” The exact entry and the match between these locations remain unverified.</p>
+        <p>{slug === "kadena-north"
+          ? "MCCS calls the site “Kadena North”; the forecast reference is “Kadena North Steps.” The exact entry and the match between these locations remain unverified."
+          : "The regional forecast is anchored at the published South Steps point. The exact entry and current access still need local confirmation."}</p>
+        {slug === "sunabe-seawall" && <p>{site.hazards.value.join(". ")}.</p>}
         <p>Reported marine life: {site.marineLife.value.join(", ")}. These are historical reports, not current sightings.</p>
         <a href={site.accessNotes.source.canonicalUrl}>MCCS site guide ↗</a>
         {point && <><p className="detail-spacing">Forecast point: {point.value.latitude}, {point.value.longitude} · {point.status.replaceAll("_", " ")}. Not an entry navigation pin.</p><a href={point.source.canonicalUrl}>{point.source.sourceName} ↗</a></>}

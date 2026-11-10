@@ -55,16 +55,19 @@ describe("forecast contracts", () => {
   });
   it("does not request forecasts for unknown or unlocated sites", async () => {
     expect((await GET(new Request("http://localhost"), { params: Promise.resolve({ slug: "unknown" }) })).status).toBe(404);
-    expect((await GET(new Request("http://localhost"), { params: Promise.resolve({ slug: "sunabe-seawall" }) })).status).toBe(422);
+    expect((await GET(new Request("http://localhost"), { params: Promise.resolve({ slug: "maeda-flats" }) })).status).toBe(422);
   });
-  it("returns Kadena's sourced preview and handles outages", async () => {
+  it.each([
+    { slug: "kadena-north", latitude: 26.3594, longitude: 127.7392 },
+    { slug: "sunabe-seawall", latitude: 26.32188, longitude: 127.74832 },
+  ])("returns the sourced preview and handles outages for $slug", async ({ slug, latitude, longitude }) => {
     const spy = vi.spyOn(OpenMeteoProvider.prototype, "getForecast").mockResolvedValue({ hours: [], metadata: [], warnings: [] });
     try {
-      const context = { params: Promise.resolve({ slug: "kadena-north" }) };
+      const context = { params: Promise.resolve({ slug }) };
       const response = await GET(new Request("http://localhost"), context);
       expect(response.status).toBe(200);
       expect((await response.json()).forecastPoint.status).toBe("needs_verification");
-      expect(spy).toHaveBeenCalledWith({ latitude: 26.3594, longitude: 127.7392, forecastDays: 2 });
+      expect(spy).toHaveBeenCalledWith({ latitude, longitude, forecastDays: 2 });
       spy.mockRejectedValue(new Error("outage"));
       expect((await GET(new Request("http://localhost"), context)).status).toBe(502);
     } finally { spy.mockRestore(); }

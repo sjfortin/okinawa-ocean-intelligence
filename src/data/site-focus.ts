@@ -1,5 +1,11 @@
-/** Product focus only. Catalog records and per-site APIs remain extensible. */
-export const focusedSiteSlug = "kadena-north";
+export const dashboardSites = {
+  "kadena-north": { name: "Kadena North Wall", area: "Kadena town" },
+  "sunabe-seawall": { name: "Sunabe Seawall", area: "Chatan town" },
+};
+
+export function isDashboardSite(slug: unknown): slug is keyof typeof dashboardSites {
+  return typeof slug === "string" && Object.hasOwn(dashboardSites, slug);
+}
 
 export interface PlanningReference {
   id: string;
@@ -12,8 +18,7 @@ export interface PlanningReference {
 }
 
 /** Reference discovery is not a retrieval of current conditions. */
-export const planningReferences: Record<string, PlanningReference[]> = {
-  "kadena-north": [
+export const planningReferences: PlanningReference[] = [
     {
       id: "kadena-weather", title: "Kadena sea conditions",
       url: "https://www.kadena.af.mil/Agencies/Local-Weather/html/",
@@ -36,7 +41,7 @@ export const planningReferences: Record<string, PlanningReference[]> = {
       id: "jma-naha-tides", title: "Naha tide table",
       url: "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=NH",
       category: "tides", description: "Predicted high and low water at Naha. Check the date and height datum.",
-      coverage: "Nearby reference station · not a validated North Wall tide or current prediction", reviewedOn: "2026-10-25",
+      coverage: "Nearby reference station · no site-specific tide or current prediction", reviewedOn: "2026-10-25",
     },
     {
       id: "nowphas", title: "NOWPHAS wave observations",
@@ -44,5 +49,4 @@ export const planningReferences: Record<string, PlanningReference[]> = {
       category: "observations", description: "Open the regional map to inspect available wave measurements and timestamps.",
       coverage: "Coastal stations · coverage and distance from the entry vary", reviewedOn: "2026-10-25",
     },
-  ],
-};
+];

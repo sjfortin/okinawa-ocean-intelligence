@@ -79,6 +79,6 @@ describe("daily tide report", () => {
   });
   it("rejects unknown and unmapped sites before fetching", async () => {
     expect((await GET(new Request("http://localhost"), { params: Promise.resolve({ slug: "missing" }) })).status).toBe(404);
-    expect((await GET(new Request("http://localhost"), { params: Promise.resolve({ slug: "sunabe-seawall" }) })).status).toBe(422);
+    expect((await GET(new Request("http://localhost"), { params: Promise.resolve({ slug: "maeda-flats" }) })).status).toBe(422);
   });
 });

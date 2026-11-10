@@ -5,6 +5,6 @@ export const nahaTideStation: TideStation = {
   sourceUrl: "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=NH",
   datum: "JMA Naha tide-table datum",
 };
-// TODO: verify North Wall time/height offsets with an authoritative local source.
+// TODO: verify Kadena North and Sunabe time/height offsets with an authoritative local source.
 // This mapping selects a nearby reference, not a validated prediction at the entry.
-export const siteTideStations: Record<string, TideStation> = { "kadena-north": nahaTideStation };
+export const siteTideStations: Record<string, TideStation> = { "kadena-north": nahaTideStation, "sunabe-seawall": nahaTideStation };
