@@ -12,7 +12,11 @@ export function forecastView(forecast: ForecastResult | null, now: number) {
     return timestamp <= now && now < timestamp + HOUR;
   }) ?? null;
   const upcoming = sorted.filter((hour) => Date.parse(hour.validAt) > now && Date.parse(hour.validAt) <= now + 24 * HOUR);
-  return { current, upcoming, stale, retrievedAt: Number.isFinite(oldest) ? new Date(oldest).toISOString() : null };
+  const recent = sorted.filter((hour) => {
+    const timestamp = Date.parse(hour.validAt);
+    return timestamp >= now - 24 * HOUR && timestamp + HOUR <= now;
+  }).reverse();
+  return { current, upcoming, recent, stale, retrievedAt: Number.isFinite(oldest) ? new Date(oldest).toISOString() : null };
 }
 
 export function compass(degrees: number | null | undefined) {

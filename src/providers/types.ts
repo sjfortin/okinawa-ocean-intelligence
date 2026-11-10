@@ -5,6 +5,7 @@ export interface ForecastRequest {
   longitude: number;
   timezone?: string;
   forecastDays?: number;
+  pastDays?: number;
 }
 
 export interface ProviderMetadata {

@@ -28,7 +28,7 @@ describe("forecast contracts", () => {
   });
   it("joins by UTC instant, preserves missing marine hours/nulls, and requests explicit units", async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(weather)).mockResolvedValueOnce(Response.json(marine));
-    const result = await new OpenMeteoProvider({ fetchImpl }).getForecast({ latitude: 26.3594, longitude: 127.7392, forecastDays: 2 });
+    const result = await new OpenMeteoProvider({ fetchImpl }).getForecast({ latitude: 26.3594, longitude: 127.7392, forecastDays: 2, pastDays: 1 });
     expect(result.metadata[0].responseHash).toBe(createHash("sha256").update(JSON.stringify(weather)).digest("hex"));
     expect(result.metadata[1].responseHash).toBe(createHash("sha256").update(JSON.stringify(marine)).digest("hex"));
     expect(result.metadata[0].requestParameters).toMatchObject({ latitude: "26.3594", forecast_days: "2", temperature_unit: "celsius" });
@@ -45,6 +45,7 @@ describe("forecast contracts", () => {
     expect(result.metadata.every((run) => run.requestedLocation.latitude === 26.3594 && run.requestedLocation.longitude === 127.7392)).toBe(true);
     for (const call of fetchImpl.mock.calls) {
       const url = new URL(String(call[0]));
+      expect(url.searchParams.get("past_days")).toBe("1");
       expect(url.searchParams.get("timeformat")).toBe("unixtime");
       expect(url.searchParams.get("wind_speed_unit")).toBe("kmh");
     }
@@ -67,7 +68,7 @@ describe("forecast contracts", () => {
       const response = await GET(new Request("http://localhost"), context);
       expect(response.status).toBe(200);
       expect((await response.json()).forecastPoint.status).toBe("needs_verification");
-      expect(spy).toHaveBeenCalledWith({ latitude, longitude, forecastDays: 2 });
+      expect(spy).toHaveBeenCalledWith({ latitude, longitude, forecastDays: 2, pastDays: 1 });
       spy.mockRejectedValue(new Error("outage"));
       expect((await GET(new Request("http://localhost"), context)).status).toBe(502);
     } finally { spy.mockRestore(); }

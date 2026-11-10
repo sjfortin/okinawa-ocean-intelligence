@@ -111,6 +111,7 @@ export class OpenMeteoProvider implements ConditionsProvider {
       timeformat: "unixtime",
       wind_speed_unit: "kmh",
     });
+    if (request.pastDays !== undefined) common.set("past_days", String(request.pastDays));
     const weatherUrl = new URL(`${this.weatherBaseUrl}/forecast`);
     weatherUrl.search = common.toString();
     weatherUrl.searchParams.set("hourly", WEATHER_FIELDS.join(","));

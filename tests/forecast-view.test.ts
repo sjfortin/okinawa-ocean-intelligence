@@ -20,6 +20,18 @@ describe("forecast dashboard time semantics", () => {
     expect(view.stale).toBe(false);
     expect(forecastView(data, Date.parse("2026-09-26T23:59:00Z")).current).toBeNull();
   });
+  it("returns completed hours from the past 24 hours, latest first", async () => {
+    const data = await fixture();
+    const now = Date.parse("2026-09-27T00:30:00Z");
+    data.hours = [-25, -24, -23, -1, 0, 1].map((offset) => ({
+      ...data.hours[0],
+      validAt: new Date(Date.parse("2026-09-27T00:00:00Z") + offset * 3600000).toISOString(),
+    }));
+    expect(forecastView(data, now).recent.map((hour) => hour.validAt)).toEqual([
+      "2026-09-26T23:00:00.000Z",
+      "2026-09-26T01:00:00.000Z",
+    ]);
+  });
   it("expires the current hour and flags old retrievals even if forecast extends forward", async () => {
     const data = await fixture();
     const view = forecastView(data, Date.parse("2026-09-27T03:00:00Z"));

@@ -61,6 +61,21 @@ export function SiteForecast({ slug }: { slug: string }) {
       <tbody>{view.upcoming.map((h) => <tr key={h.validAt}><th scope="row">{time(h.validAt)}</th><td>{value(h.waveHeightM)} m <small>/ {value(h.wavePeriodS)} s</small></td><td>{value(h.windSpeedKph)} <small>/ {value(h.windGustKph)} km/h · {compass(h.windDirectionDeg)}</small></td><td>{value(h.swellHeightM)} m</td><td>{value(h.seaSurfaceTemperatureC)} °C</td><td>{value(h.precipitationMm)} mm</td></tr>)}</tbody>
     </table></div> : <div className="empty-state">{loading ? "Loading the hourly outlook…" : "No upcoming forecast hours available. Try refreshing."}</div>}
     </details>
+    <details>
+      <summary>Past 24 hours <span className="summary-note">Waves & wind · JST</span></summary>
+      <p className="small-note">Archived regional model estimates from Open-Meteo. Times are in Japan time, most recent first.</p>
+      {view.recent.length ? <div className="forecast-scroll" tabIndex={0} role="region" aria-label="Recent wave and wind estimates">
+        <table>
+          <thead><tr><th scope="col">Time</th><th scope="col">Waves</th><th scope="col">Wind</th><th scope="col">Gusts</th></tr></thead>
+          <tbody>{view.recent.map((h) => <tr key={h.validAt}>
+            <th scope="row">{time(h.validAt)}</th>
+            <td>{value(h.waveHeightM)} m <small>· {value(h.wavePeriodS)} s · from {compass(h.waveDirectionDeg)}</small></td>
+            <td>{value(h.windSpeedKph)} km/h <small>· from {compass(h.windDirectionDeg)}</small></td>
+            <td>{value(h.windGustKph)} km/h</td>
+          </tr>)}</tbody>
+        </table>
+      </div> : <div className="empty-state">{loading ? "Loading recent estimates…" : "No recent wave or wind estimates available."}</div>}
+    </details>
     {forecast && <details className="data-details"><summary>Sources & details</summary>
       <p>Weather by <a href="https://open-meteo.com/">Open-Meteo</a>; marine data by <a href="https://www.dwd.de/">DWD</a> and <a href="https://open-meteo.com/en/docs/marine-weather-api">Open-Meteo Marine</a>. Refreshes every 10 minutes. Retrieval time is not the model issue time.</p>
       {forecast.warnings.map((warning) => <p key={warning}>{warning}</p>)}

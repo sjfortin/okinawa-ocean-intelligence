@@ -9,7 +9,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   const point = site.coordinates?.status === "verified" ? site.coordinates : site.forecastPoint;
   if (!point) return NextResponse.json({ error: "A sourced forecast location is not yet available for this site." }, { status: 422 });
   try {
-    const forecast = await getForecast({ ...point.value, forecastDays: 2 });
+    const forecast = await getForecast({ ...point.value, forecastDays: 2, pastDays: 1 });
     return NextResponse.json({ ...forecast, siteSlug: slug, forecastPoint: point }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof ForecastStorageError) {
