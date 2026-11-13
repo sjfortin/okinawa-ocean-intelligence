@@ -1,6 +1,6 @@
 export const dashboardSites = {
-  "kadena-north": { name: "Kadena North Wall", area: "Kadena town" },
-  "sunabe-seawall": { name: "Sunabe Seawall", area: "Chatan town" },
+  "kadena-north": { name: "Kadena North Wall", area: "Kadena town", jmaAreaCode: "4732500" },
+  "sunabe-seawall": { name: "Sunabe Seawall", area: "Chatan town", jmaAreaCode: "4732600" },
 };
 
 export function isDashboardSite(slug: unknown): slug is keyof typeof dashboardSites {

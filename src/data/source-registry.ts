@@ -1,6 +1,13 @@
 import type { SourceDefinition } from "@/domain/provenance";
 
 export const sourceRegistry = {
+  jmaWeatherWarnings: {
+    id: "jma-okinawa-weather-warnings",
+    name: "JMA — Okinawa municipal weather warnings",
+    canonicalUrl: "https://www.jma.go.jp/bosai/warning/data/r8/471000.json",
+    publisher: "Japan Meteorological Agency",
+    licenseNotes: "Attribute JMA and identify reformatted output. Retain normalized alerts and response-hash metadata.",
+  },
   jmaNahaTides: {
     id: "jma-tides-NH",
     name: "JMA — Naha astronomical tide predictions",

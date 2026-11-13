@@ -40,20 +40,29 @@ export function SiteForecast({ slug }: { slug: string }) {
 
   const view = forecastView(forecast, now);
   const hour = view.current;
-  const status = error ? "Forecast refresh failed" : loading && !forecast ? "Loading forecast…" : view.stale ? "Forecast unavailable or stale" : !hour ? "No forecast for this hour" : "Forecast only · entry unverified";
+  const status = error ? "Refresh failed" : loading && !forecast ? "Loading…" : view.stale ? "Data unavailable or stale" : !hour ? "Current hour unavailable" : `${time(hour.validAt)} JST · Model estimate`;
   return <section className="forecast-panel" aria-label="Water and weather forecast" aria-busy={loading}>
-    <div className="conditions-heading"><h2>This hour</h2><button onClick={() => void load()} disabled={loading}>{loading ? "Updating…" : "Refresh"}</button></div>
-    <div className="status-banner"><span className="status-dot" /><div><strong role="status">{status}</strong><p>Regional model; conditions at the entry may differ.</p></div></div>
+    <div className="conditions-heading"><div><h2>Right now</h2><p className="timestamp" role="status">{status}</p></div><button onClick={() => void load()} disabled={loading}>{loading ? "Updating…" : "Refresh"}</button></div>
     {error && <p className="notice" role="alert">{error} {forecast ? "Showing the last retrieved forecast below." : "Use the official references below while the forecast is unavailable."}</p>}
-    <p className="timestamp">{hour ? `Valid ${time(hour.validAt)} JST` : "Current hour unavailable"}{view.retrievedAt ? ` · Retrieved ${time(view.retrievedAt)} JST` : ""}</p>
     <div className="metric-grid">
       <Metric label="Waves" number={hour?.waveHeightM} unit="m" detail={`${value(hour?.wavePeriodS)} s period · from ${compass(hour?.waveDirectionDeg)}`} />
       <Metric label="Wind" number={hour?.windSpeedKph} unit="km/h" detail={`From ${compass(hour?.windDirectionDeg)} · gusts ${value(hour?.windGustKph)} km/h`} />
-      <Metric label="Water" number={hour?.seaSurfaceTemperatureC} unit="°C" detail="Sea surface temperature" />
-      <Metric label="Swell" number={hour?.swellHeightM} unit="m" detail={`From ${compass(hour?.swellDirectionDeg)} · offshore model`} />
+      <Metric label="Water" number={hour?.seaSurfaceTemperatureC} unit="°C" detail="Surface temperature" />
+      <Metric label="Air" number={hour?.airTemperatureC} unit="°C" detail={`Rain ${value(hour?.precipitationMm)} mm`} />
     </div>
-    <p className="secondary-metrics">Air {value(hour?.airTemperatureC)} °C <span>·</span> Rain {value(hour?.precipitationMm)} mm <span>·</span> Offshore current {value(hour?.oceanCurrentVelocityKph)} km/h</p>
-    <p className="small-note">— means unavailable. Currents shown are offshore estimates.</p>
+    <p className="small-note model-note">Regional forecast · Conditions at the seawall may differ. — means unavailable.</p>
+    <section className="near-outlook" aria-labelledby="near-outlook-heading">
+      <h3 id="near-outlook-heading">Next few hours</h3>
+      {view.upcoming.length ? <div className="outlook-scroll" tabIndex={0} role="region" aria-label="Next six hours, scroll horizontally">
+        <table className="outlook-table">
+          <thead><tr><th scope="col">JST</th>{view.upcoming.slice(0, 6).map((h) => <th scope="col" key={h.validAt}>{new Date(h.validAt).toLocaleTimeString("en-GB", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" })}</th>)}</tr></thead>
+          <tbody>
+            <tr><th scope="row">Waves</th>{view.upcoming.slice(0, 6).map((h) => <td key={h.validAt}>{value(h.waveHeightM)} <small>m</small></td>)}</tr>
+            <tr><th scope="row">Wind</th>{view.upcoming.slice(0, 6).map((h) => <td key={h.validAt}>{value(h.windSpeedKph)} <small>km/h</small><small className="outlook-direction">{compass(h.windDirectionDeg)}</small></td>)}</tr>
+          </tbody>
+        </table>
+      </div> : <p className="small-note">{loading ? "Loading outlook…" : "Upcoming hours unavailable."}</p>}
+    </section>
     <details className="hourly-details"><summary>Next 24 hours <span className="summary-note">Hourly forecast · JST</span></summary>
     {view.upcoming.length ? <div className="forecast-scroll" tabIndex={0} role="region" aria-label="Hourly outlook, scroll horizontally"><table>
       <caption>Hourly forecast · times in JST</caption>
@@ -76,7 +85,9 @@ export function SiteForecast({ slug }: { slug: string }) {
         </table>
       </div> : <div className="empty-state">{loading ? "Loading recent estimates…" : "No recent wave or wind estimates available."}</div>}
     </details>
-    {forecast && <details className="data-details"><summary>Sources & details</summary>
+    {forecast && <details className="data-details"><summary>More conditions & sources</summary>
+      <p>Swell {value(hour?.swellHeightM)} m · from {compass(hour?.swellDirectionDeg)}. Offshore current {value(hour?.oceanCurrentVelocityKph)} km/h.</p>
+      <p>{view.retrievedAt && `Retrieved ${time(view.retrievedAt)} JST.`}</p>
       <p>Weather by <a href="https://open-meteo.com/">Open-Meteo</a>; marine data by <a href="https://www.dwd.de/">DWD</a> and <a href="https://open-meteo.com/en/docs/marine-weather-api">Open-Meteo Marine</a>. Refreshes every 10 minutes. Retrieval time is not the model issue time.</p>
       {forecast.warnings.map((warning) => <p key={warning}>{warning}</p>)}
       <p>Underwater visibility, breaking surf, local rip currents and access closures are not measured here. Sea-level model output is not used as a local tide table.</p>
